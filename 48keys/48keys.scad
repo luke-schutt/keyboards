@@ -92,7 +92,7 @@ module half_hand() {
                     }
                 }
                 columns(half_spec)
-                    translate([-9.51, -9.51, -11]) cube([19.02, 19.02, 22]);
+                    translate([-10.25, -10.25, -11]) cube([20.5, 20.5, 22]);
                 translate([7, 0, -10.01]) cube([10, 19 * 3, 10.01]);
             }
         }
@@ -136,7 +136,7 @@ module thumbs() {
                             cube([40, 19 * 1.5 + 6, 9]);
                     }
                 }
-                cube([19 * 3, 19 * 1.5, 15], center = true);
+                cube([19 * 3 + 1.5, 19 * 1.5 + 1.5, 15], center = true);
                 translate([0, 19 * 0.75, -4])
                     cube([19 * 3, 10, 8], center = true);
                 translate([19 * -1.5 - 42, -12.5, -3])
@@ -172,7 +172,9 @@ module half_array() {
     }
     // Thumbs.
     translate([19 * -2 + 0.9, 19 * -0.75 - 4.45, 2])
-        rotate([0, 0, -10]) thumbs();
+        rotate([0, 0, -10])
+        translate([0.75, -0.75, 0])
+        thumbs();
 }
 
 if (render_case) {
@@ -183,29 +185,29 @@ if (render_case) {
             // Gap filling.
             difference() {
                 // Main positive.
-                translate([0, 7.6, 5])
-                    cube([63, 101.1, 17], center = true);
+                translate([0, 6.6, 5])
+                    cube([63, 102.1, 17], center = true);
                 // Left and right thumb cutouts.
-                translate([19 * -2, 19 * -1.25 + 0.35, 10])
+                translate([19 * -2, 19 * -1.25 - 0.65, 10])
                     rotate([0, 0, -10])
-                    cube([19 * 3 + 3.75, 19 * 2, 30], center = true);
-                translate([19 * 2, 19 * -1.25 + 0.35, 10])
+                    cube([19 * 3 + 3.75, 19 * 2 + 2, 30], center = true);
+                translate([19 * 2, 19 * -1.25 - 0.65, 10])
                     rotate([0, 0, 10])
-                    cube([19 * 3 + 3.75, 19 * 2, 30], center = true);
+                    cube([19 * 3 + 3.75, 19 * 2 + 2, 30], center = true);
                 // Thumb center cutout.
                 translate([0, -27.7, 14])
                     cube([30, 36, 10], center = true);
                 // Left and right side cutouts.
                 rotate([0, 0, -10])
-                    translate([19 * -2.49, 19 * 1.65, 10])
+                    translate([19 * -2.5 + 1.5, 19 * 1.65, 10])
                     cube([19 * 2, 19 * 4, 20.02], center = true);
                 rotate([0, 0, 10])
-                    translate([19 * 2.49, 19 * 1.65, 10])
+                    translate([19 * 2.5 - 1.5, 19 * 1.65, 10])
                     cube([19 * 2, 19 * 4, 20.02], center = true);
-                translate([-8, -44.9, 8])
+                translate([-8, -45.66, 8])
                     rotate([0, 0, -10])
                     cube([10, 4, 20], center = true);
-                translate([8, -44.9, 8])
+                translate([8, -45.66, 8])
                     rotate([0, 0, 10])
                     cube([10, 4, 20], center = true);
                 // Center cavity.
