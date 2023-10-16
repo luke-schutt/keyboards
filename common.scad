@@ -33,6 +33,18 @@ module scale_if(condition, scaling) {
 }
 
 
+module minkowski_if(condition) {
+    if (condition) {
+        minkowski() {
+            children(0);
+            children(1);
+        }
+    } else {
+        children(0);
+    }
+}
+
+
 module basic_socket_negative(hole = 14, ledge = 1.65, lip = 1.25, taper = 0.75, thickness = 4) {
     half_hole = hole / 2;
     base_width = hole + ((lip + taper) * 2);
