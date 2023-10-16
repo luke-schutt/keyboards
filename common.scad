@@ -1,4 +1,27 @@
+function flatten(v) = [for (a = v) for (b = a) b];
+
+
 function sum(v, i = 0, n = 0) = i < len(v) ? sum(v, i = i + 1, n = n + v[i]) : n;
+
+
+function rotate_point2d(angle, point) = [
+    (cos(angle) * point[0]) + (cos(90 - angle) * -point[1]),
+    (sin(90 - angle) * point[1]) + (sin(angle) * point[0])
+];
+
+
+function rotate_point(angles, point) = let(
+    rotate_x = rotate_point2d(angles[0], [point[1], point[2]]), // [y, z]
+    rotate_y = rotate_point2d(angles[1], [rotate_x[1], point[0]]), // [z, x]
+    rotate_z = rotate_point2d(angles[2], [rotate_y[1], rotate_x[0]]) // [x, y]
+) [
+    rotate_z[0], rotate_z[1], rotate_y[0] // [x, y, z]
+];
+
+
+function rotate_points(angles, points) = [
+    for (point = points) rotate_point(angles, point)
+];
 
 
 module scale_if(condition, scaling) {
