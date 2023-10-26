@@ -254,8 +254,8 @@ module socket_rail(pin_spacing = 2.54, walls = 2, height = 3, pins = 13, slop = 
 }
 
 
-module rounded_cubeoid(size, r, center = true) {
-    linear_extrude(size[2], center = center)
+module rounded_cubeoid(size, r, center = true, scale = 1.0) {
+    linear_extrude(size[2], center = center, scale = scale)
         if (r > 0) {
             union() {
                 square([size[0], size[1] - r * 2], center = center);
