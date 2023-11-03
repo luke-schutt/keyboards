@@ -11,8 +11,11 @@ $fa = $preview ? 10 : 1;
 render_housing = true;
 // If the stem should be rendered.
 render_stem = true;
-// Split between housing and stem.
+// Split between housing and stem or sprue items.
 split = 0;
+// The number of switches connected with sprues. X and Y.
+// Only housing or stem may be included.
+switch_count = [5, 2];
 
 
 /* [Housing size] */
@@ -25,12 +28,10 @@ housing_corner_radius = 1;
 housing_height = 4.5;
 // Taper for the top of the housing.
 housing_taper = 1;
-// Taper height.
-housing_taper_height = 1.5;
 // Housing thickness (top and minimum walls).
-housing_thickness = 1.5;
+housing_thickness = 1.25;
 // Margins between the body and stem.
-housing_margin = 0.25;
+housing_margin = 0.1;
 
 
 /* [Plate mounting] */
@@ -56,9 +57,9 @@ plate_clip_spacing = 4;
 /* [Magnet sizing] */
 
 // If the magnet is rectangular.
-magnet_rectangular = true;
+magnet_rectangular = false;
 // Margin around the magnet.
-magnet_margin = housing_margin * 0.5;
+magnet_margin = housing_margin;
 // Magnet size (radius & height or x/y, (y,) & z).
 magnet_size = magnet_rectangular
     ? [1 / 8 * 25.4, 1 / 4 * 25.4, 1 / 32 * 25.4]
@@ -135,15 +136,16 @@ module magnet(
 //
 module housing(housing_height = housing_height) {
     clip_height = plate_clip > 0 && plate_lip > 0 ? plate_top - plate_thickness : 0;
+    top_taper = housing_height - plate_top - plate_lip_height;
     bottom_taper = max(0.5, clip_height > 0 ? clip_height : (plate_top - plate_thickness) / 2);
-    housing_main_height = housing_height - housing_taper_height - bottom_taper;
+    housing_main_height = housing_height - top_taper - bottom_taper;
     translate([0, 0, housing_main_height / 2 + bottom_taper])
         rounded_cubeoid([housing_size, housing_size, housing_main_height], housing_corner_radius);
-    if (housing_taper > 0 && housing_taper_height > 0) {
+    if (housing_taper > 0 && top_taper > 0) {
         taper = (housing_size - housing_taper * 2) / housing_size;
-        translate([0, 0, housing_main_height + housing_taper_height / 2 + bottom_taper])
+        translate([0, 0, housing_main_height + top_taper / 2 + bottom_taper])
             rounded_cubeoid(
-                [housing_size, housing_size, housing_taper_height],
+                [housing_size, housing_size, top_taper],
                 housing_corner_radius,
                 scale = taper
             );
@@ -289,25 +291,60 @@ module stem_box(height = housing_thickness, margin = housing_margin) {
 }
 
 
-// Render the housing as needed.
-if (render_housing) {
-    translate([-split, 0, 0])
-    union() {
-        difference() {
-            housing();
-            prongs(
-                spacing = choc_prong_spacing + stem_spacing_offset,
-                height = housing_height + 0.1,
-                margin = housing_thickness + housing_margin
-            );
-            translate([0, 0, housing_height - magnet_size[len(magnet_size) - 1]])
-                magnet();
-            cutout_size = housing_size - max(housing_thickness, housing_taper) * 2;
-            translate([0, 0, (housing_height - housing_thickness) / 2 - 0.05])
-                rounded_cubeoid(
-                    [cutout_size, cutout_size, housing_height - 1.1],
-                    housing_corner_radius / 2
+//
+// Render a switch.
+//
+module switch(split = split) {
+    // Render the housing as needed.
+    if (render_housing) {
+        translate([-split, 0, 0])
+        union() {
+            difference() {
+                housing();
+                prongs(
+                    spacing = choc_prong_spacing + stem_spacing_offset,
+                    height = housing_height + 0.1,
+                    margin = housing_thickness + housing_margin
                 );
+                translate([0, 0, housing_height - magnet_size[len(magnet_size) - 1]])
+                    magnet();
+                cutout_size = housing_size - max(housing_thickness, housing_taper) * 2;
+                translate([0, 0, (housing_height - housing_thickness) / 2 - 0.05])
+                    rounded_cubeoid(
+                        [cutout_size, cutout_size, housing_height - 1.1],
+                        housing_corner_radius / 2
+                    );
+                if (diode_cutout) {
+                    translate([0, diode_cutout_offset, diode_cutout_size[2] * 0.5 - 0.1])
+                        cube(
+                            [diode_cutout_size[0], diode_cutout_size[1], diode_cutout_size[2] + 0.2],
+                            center = true
+                        );
+                }
+            }
+            stem_slots(height = housing_height - 0.2, margin = 0);
+        }
+    }
+    // Render the stem as needed.
+    if (render_stem) {
+        translate([split, 0, 0])
+        difference() {
+            union() {
+                difference() {
+                    prongs(
+                        spacing = choc_prong_spacing + stem_spacing_offset,
+                        height = housing_height + stem_extension,
+                        margin = housing_thickness
+                    );
+                    translate([0, 0, housing_thickness])
+                        magnet(h = housing_height + stem_extension, margin = magnet_margin * 2);
+                    translate([0, 0, -0.1]) stem_slots(height = housing_height + stem_extension + 0.2);
+                }
+                stem_box();
+            }
+            translate([0, 0, housing_thickness])
+                prongs(height = housing_height + stem_extension + 0.1, margin = 0.25);
+            translate([0, 0, -magnet_margin]) magnet();
             if (diode_cutout) {
                 translate([0, diode_cutout_offset, diode_cutout_size[2] * 0.5 - 0.1])
                     cube(
@@ -316,37 +353,44 @@ if (render_housing) {
                     );
             }
         }
-        stem_slots(height = housing_height - housing_thickness + 0.1, margin = 0);
     }
 }
 
 
-// Render the stem as needed.
-if (render_stem) {
-    translate([split, 0, 0])
-    difference() {
-        union() {
-            difference() {
-                prongs(
-                    spacing = choc_prong_spacing + stem_spacing_offset,
-                    height = housing_height + stem_extension,
-                    margin = housing_thickness
-                );
-                translate([0, 0, housing_thickness])
-                    magnet(h = housing_height + stem_extension, margin = magnet_margin * 2);
-                translate([0, 0, -0.1]) stem_slots(height = housing_height + stem_extension + 0.2);
-            }
-            stem_box();
-        }
-        translate([0, 0, housing_thickness])
-            prongs(height = housing_height + stem_extension + 0.1, margin = 0.25);
-        translate([0, 0, -magnet_margin]) magnet();
-        if (diode_cutout) {
-            translate([0, diode_cutout_offset, diode_cutout_size[2] * 0.5 - 0.1])
-                cube(
-                    [diode_cutout_size[0], diode_cutout_size[1], diode_cutout_size[2] + 0.2],
-                    center = true
-                );
+if ((render_housing && !render_stem) || (!render_housing && render_stem)) {
+    for (y = [0 : switch_count[1] - 1]) {
+        for (x = [0 : switch_count[0] - 1]) {
+            translate([
+                (x - (switch_count[0] - 1) / 2) * (housing_size + split),
+                (y - (switch_count[1] - 1) / 2) * (housing_size + split),
+                0
+            ]) switch(split = 0);
         }
     }
+    sprue_size = 0.1 + split + (render_housing
+        ? max(housing_thickness, housing_taper) * 2
+        : (max(housing_thickness, housing_taper) + housing_margin) * 2
+    );
+    for (y = [0 : switch_count[1] - 2]) {
+        for (x = [0 : switch_count[0] - 1]) {
+            translate([
+                (x - (switch_count[0] - 1) / 2) * (housing_size + split)
+                    - (render_stem ? stem_stabilization[0] : 0),
+                (y - (switch_count[1] - 2) / 2) * (housing_size + split),
+                0.5
+            ]) cube([1, sprue_size, 1], center = true);
+        }
+    }
+    for (y = [0 : switch_count[1] - 1]) {
+        for (x = [0 : switch_count[0] - 2]) {
+            translate([
+                (x - (switch_count[0] - 2) / 2) * (housing_size + split),
+                (y - (switch_count[1] - 1) / 2) * (housing_size + split)
+                    - (render_stem ? stem_stabilization[0] : 0),
+                0.5
+            ]) cube([sprue_size, 1, 1], center = true);
+        }
+    }
+} else {
+    switch(split = split);
 }
