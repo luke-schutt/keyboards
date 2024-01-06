@@ -13,7 +13,7 @@ $fa = $preview ? 10 : 2;
 
 
 // If the plus-sized board should be rendered (~60% vs ~40%).
-plus_size = true;
+plus_size = false;
 // If the inverted-T arrows should be added (overlaps with the bottom center pinky).
 arrows = plus_size;
 // If the keyboard should use stagger or be primalily ortho.
