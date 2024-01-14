@@ -22,6 +22,8 @@ do_stagger = false;
 rotate_thumbs = true;
 // If the keyboard should be split for vertical printing.
 split_board = true;
+// If a 2d slice should be take for a bottom plate.
+bottom_slice = false;
 
 // If the test "keys" should be rendered for preview.
 test_keys = false;
@@ -123,6 +125,11 @@ usb_offset = [
 post_size = [1.5, 3.25];
 // Screw post wall thickness (mm).
 post_walls = 2.5;
+
+// Thickness for the bottom (mm).
+bottom_thickness = 1.6;
+// Screw size (diameter for plate) (mm).
+screw_size = 2.1;
 
 
 // Helper to calculate recursive thumb offset.
@@ -593,7 +600,7 @@ module keyboard() union() {
         if (do_minkowski) {
             shell_half(cavity = true);
             shell_half(right = true, cavity = true);
-        }//}{
+        }
         // Socket subtraction.
         matrix_half() {
             switch_socket();
@@ -622,8 +629,6 @@ module keyboard() union() {
                 translate([0, 0, -usb_housing_size[2] / 2])
                     rounded_cubeoid([for (i = usb_housing_size) i + usb_margin], usb_radius);
             }
-        // Cross-section slice.
-        //translate([0, -200, -100]) cube([400, 400, 200]);
     }
     // MCU mount.
     mount_width = (mcu_header_spacing - 2) * mcu_pin_spacing;
@@ -671,7 +676,6 @@ module keyboard() union() {
 }
 
 
-//projection()
 if (split_board) {
     // Left half.
     translate([10, 0, 0])
@@ -686,6 +690,14 @@ if (split_board) {
         difference() {
             keyboard();
             translate([-400, -200, -100]) cube([400, 400, 200]);
+        }
+} else if (bottom_slice) {
+    linear_extrude(bottom_thickness)
+        difference() {
+            fill() projection() keyboard();
+            for (post_info = screw_posts) {
+                translate([post_info[0], post_info[1], 0]) circle(d = screw_size);
+            }
         }
 } else {
     keyboard();
