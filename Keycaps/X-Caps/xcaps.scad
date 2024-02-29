@@ -1,4 +1,4 @@
-$fn = $preview ? 25 : 100;
+$fn = $preview ? 25 : 150;
 
 // Number of keys horizontally.
 key_count_x = 2;
@@ -27,7 +27,7 @@ cap_height = cap_u_height * u_height - cap_spacing;
 // Keycap thickness
 cap_thickness = 3;
 // Keycap front/back rounding.
-cap_rounding = 2;
+cap_rounding = 2.5;
 // Keycap corner radius.
 cap_radius = 1.6;
 // Keycap thickness.
@@ -44,12 +44,12 @@ dish_depth = 1.2;
 // Edge offset for the dish.
 dish_offset = 2;
 // Dish multiplier relative to cap height.
-dish_multiplier = 2.4;
+dish_multiplier = 2;
 
 // Chamfer size.
-chamfer_size = dish_offset - 0.25;
+chamfer_size = dish_offset + 0.15;
 // Chamfer offset from the bottom.
-chamfer_offset = 0.5;
+chamfer_offset = 0.75;
 
 // Homing bump?
 homing_bump_enabled = false;
@@ -140,7 +140,7 @@ module keycap_shape(w, h, d, r) {
 
 
 module choc_prong() {
-    prong_height = 4;
+    prong_height = 3;
     prong_width = 1.2 - stem_reduction;
     prong_depth = 3 - stem_reduction;
     difference() {
