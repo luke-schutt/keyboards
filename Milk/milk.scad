@@ -12,29 +12,29 @@ render_bottom = true;
 // If a JST SH connector cutout should be added.
 jst_cutout = true;
 // JST cutout size.
-jst_cutout_size = [6.3, 4.35, 3];
+jst_cutout_size = [6.4, 4.5, 3];
 // Switch spacing.
 spacing = [19.05, 19.05];
 // Switch cutout size.
 switch_cutout = [14, 14];
 // Margin around the switches.
-key_margin = 1;
+key_margin = 0.5;
 // Key count.
 key_count = [1, 2];
 // Surround wall size (height and thickness).
 surround_walls = [jst_cutout ? jst_cutout_size.y + 1 : 3, 3];
 // Surround wall roundover.
-surround_fillet = surround_walls.x / 3;
+surround_fillet = surround_walls.x / 4;
 // Plate thickness.
 plate_thickness = 1.6;
+// Thickness for the bottom case.
+bottom_thickness = 2.2;
 // Housing cavity depth.
 cavity_depth = 1.4;
-// Clip thickness.
-clip_thickness = min(surround_walls.x / 3, 0.75);
-// Cutout margin for the case clips.
-clip_margin = 0.1;
-// Extension for the clip.
-clip_extend = 1;
+// Worry stone depth (0 for none).
+worry_depth = 1;
+// Worry stone size.
+worry_size = [1.1, 0.85];
 
 
 // Calculated main size without fillet.
@@ -48,6 +48,21 @@ cutout_offset = [
     (key_count.x - 1) * spacing.x / -2,
     (key_count.y - 1) * spacing.y / -2
 ];
+
+
+module insert_negative(t = 0.05, extra = 0) {
+    translate([0, 0, -extra])
+        cylinder(h = 2.15 + extra, d = 3.5 + t);
+    cylinder(h = 3 + t * 2, d = 3.1 + t);
+}
+
+
+module screw_negative() {
+    translate([0, 0, -bottom_thickness]) {
+        cylinder(h = bottom_thickness + 1, r = 1);
+        cylinder(h = 1.6, r1 = 2.1, r2 = 0.9);
+    }
+}
 
 
 module flat_carton(cutout = true) {
@@ -90,27 +105,6 @@ module carton_positive() {
     }
 }
 
-
-
-module clip(margin = 0, extend = 0) {
-    size = [main_size.z, min(main_size.z, spacing.y / 2), clip_thickness];
-    adjusted = [ for (v = size) v + margin * 2 ];
-    r = min(size.x, size.y) / 4;
-    translate([-size.z, 0, 0])
-        rotate([0, 90, 0])
-        difference() {
-            translate([-r - extend / 2, 0, size.z / 2])
-                rounded_cubeoid(
-                    [adjusted.x + extend, adjusted.y, adjusted.z],
-                    r = r + margin
-                );
-            translate([size.x / -3, 0, -0.1 - margin])
-                cylinder(h = size.z + margin * 2 + 0.2, r = r - margin);
-            translate([size.x / -2 - r - extend - margin, 0, -margin])
-                rotate([0, 45, 0])
-                cube([adjusted.z * 1.4, adjusted.y, adjusted.z * 1.4], center = true);
-        }
-}
 
 
 module milk_top() {
@@ -157,46 +151,67 @@ module milk_top() {
                     );
             }
         }
-        for (x = [-1, 1]) {
-            for (y = [0 : key_count.y - 1]) {
+        for (y = [-1, 0, 1]) {
+            for (x = [-1, 1]) {
                 translate([
-                    ((main_size.x) / 2 + surround_fillet) * x,
-                    cutout_offset.y + spacing.y * y,
+                    (main_size.x - surround_walls.x / 2) / 2 * x,
+                    (main_size.y - surround_walls.x / 2) / 2 * y,
                     0
                 ])
-                    rotate([0, 0, x < 0 ? 180 : 0])
-                    clip(margin = clip_margin, extend = clip_extend);
+                    insert_negative();
             }
         }
+        translate([0, (main_size.y - surround_walls.x) / 2 + main_size.x / 2, 0])
+            insert_negative();
     }
 }
 
 
 module milk_bottom() {
-    union() {
-        translate([0, 0, -plate_thickness - clip_margin])
-            minkowski() {
-                linear_extrude(plate_thickness) flat_carton(cutout = false);
-                difference() {
-                    sphere(r = surround_fillet);
-                    translate([0, 0, surround_fillet + 0.5])
-                        cube(surround_fillet * 2 + 1, center = true);
-                }
+    difference() {
+        minkowski() {
+            translate([0, 0, surround_fillet - bottom_thickness])
+                linear_extrude(bottom_thickness - surround_fillet)
+                flat_carton(cutout = false);
+            difference() {
+                sphere(r = surround_fillet);
+                translate([0, 0, surround_fillet + 0.5])
+                    cube(surround_fillet * 2 + 1, center = true);
             }
-        for (x = [-1, 1]) {
-            for (y = [0 : key_count.y - 1]) {
+        }
+        translate([0, main_size.y / -2 + 0.5, -0.2])
+            cube([jst_cutout_size.x, jst_cutout_size.y + 1, 0.4], center = true);
+        for (y = [-1, 0, 1]) {
+            for (x = [-1, 1]) {
                 translate([
-                    ((main_size.x) / 2 + surround_fillet) * x,
-                    cutout_offset.y + spacing.y * y,
+                    (main_size.x - surround_walls.x / 2) / 2 * x,
+                    (main_size.y - surround_walls.x / 2) / 2 * y,
                     0
                 ])
-                    rotate([0, 0, x < 0 ? 180 : 0])
-                    clip();
+                    screw_negative();
+            }
+        }
+        translate([0, (main_size.y - surround_walls.x) / 2 + main_size.x / 2, 0])
+            screw_negative();
+        if (worry_depth > 0) {
+            for (y = [0 : key_count.y - 1]) {
+                for (x = [0 : key_count.x - 1]) {
+                    translate([
+                        cutout_offset.x + spacing.x * x,
+                        cutout_offset.y + spacing.y * y,
+                        -bottom_thickness - worry_depth * 0.25
+                    ])
+                        scale([
+                            spacing.x * worry_size.x / 2,
+                            spacing.y * worry_size.y / 2,
+                            worry_depth * 1.5
+                        ])
+                            sphere(r = 1);
+                }
             }
         }
     }
 }
-
 
 if (render_top) milk_top();
 if (render_bottom) milk_bottom();
