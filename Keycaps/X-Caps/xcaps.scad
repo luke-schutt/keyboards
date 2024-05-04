@@ -1,4 +1,7 @@
-$fn = $preview ? 25 : 150;
+//$fn = $preview ? 25 : 150;
+$fs = $preview ? 0.5 : 0.1;
+$fa = $preview ? 5 : 1;
+
 
 // Number of keys horizontally.
 key_count_x = 2;
@@ -31,20 +34,20 @@ cap_rounding = 2.5;
 // Keycap corner radius.
 cap_radius = 1.6;
 // Keycap thickness.
-cap_cutout = 0.65;
+cap_cutout = 1;
 // If the cutout should be basic.
 cap_cutout_basic = true;
 // Cap cutout depth for basic cutouts.
-cap_cutout_depth_basic = 0.8;
+cap_cutout_depth_basic = 1;
 
 // If the dish should be added.
 dish_cap = true;
 // Dish depth.
-dish_depth = 1.2;
+dish_depth = 0.8;
 // Edge offset for the dish.
 dish_offset = 2;
 // Dish multiplier relative to cap height.
-dish_multiplier = 2;
+dish_multiplier = 1.5;
 
 // Chamfer size.
 chamfer_size = dish_offset + 0.15;
@@ -79,8 +82,8 @@ module edge_rounding(w, d) {
 }
 
 
-module base_shape(w, h, d, r) {
-    linear_extrude(d) {
+module base_shape(w, h, d, r, scale = 1) {
+    linear_extrude(d, scale = scale) {
         square([w, h - (r * 2)], center = true);
         square([w - (r * 2), h], center = true);
         translate([(w / 2) - r, (h / 2) - r, 0])
@@ -266,7 +269,8 @@ module keycap() {
                         w = cap_width - cap_cutout * 2,
                         h = cap_height - cap_cutout * 2,
                         d = cap_cutout_depth_basic + 0.001,
-                        r = cap_radius / 2
+                        r = cap_radius / 2,
+                        scale = 0.9
                     );
             } else {
                 translate([0, 0, -cap_cutout])
@@ -280,16 +284,16 @@ module keycap() {
         }
         if (cap_cutout_basic) {
             translate([0, 0, cap_cutout_depth_basic])
-                x_stem();
+                children();
         } else {
             translate([0, 0, cap_thickness - dish_depth - cap_cutout / 2])
-                x_stem();
+                children();
         }
     }
 }
 
 
-keycap();
+keycap() x_stem();
 
 
 /*
