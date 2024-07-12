@@ -1,13 +1,14 @@
 use <../common.scad>;
 $fn = 20;
 
-render_case = true;
 render_hull = false;
 render_cutouts = true;
 render_surround = true;
 render_inserts = true;
 render_dummies = false;
 render_controller = false;
+
+extend_case = 0;
 
 hole_size = 14.1;
 socket_ledge = 1.5;
@@ -177,7 +178,7 @@ module half_array() {
         thumbs();
 }
 
-if (render_case) {
+module render_case() {
     difference() {
         union() {
             half_array();
@@ -257,6 +258,14 @@ if (render_case) {
         translate([-150, -75, -20])
             cube([300, 150, 20]);
     }
+}
+
+translate([0, 0, extend_case])
+    render_case();
+if (extend_case > 0) {
+    linear_extrude(extend_case + 0.01)
+        projection(cut = true)
+        render_case();
 }
 
 if (render_controller) {
